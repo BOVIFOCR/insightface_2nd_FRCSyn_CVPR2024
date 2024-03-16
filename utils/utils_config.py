@@ -1,9 +1,10 @@
 import importlib
 import os.path as osp
+from datetime import datetime
 
 
 # def get_config(config_file):
-def get_config(config_file, run_name):
+def get_config(config_file, run_name=''):
     assert config_file.startswith('configs/'), 'config file setting must start with configs/'
     temp_config_name = osp.basename(config_file)
     temp_module_name = osp.splitext(temp_config_name)[0]
@@ -13,6 +14,7 @@ def get_config(config_file, run_name):
     job_cfg = config.config
     cfg.update(job_cfg)
     if cfg.output is None:
+        # curr_date_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
         # cfg.output = osp.join('work_dirs', temp_module_name)
         cfg.output = osp.join('work_dirs', temp_module_name, run_name)
     return cfg

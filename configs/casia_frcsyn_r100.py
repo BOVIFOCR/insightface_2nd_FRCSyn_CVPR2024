@@ -16,8 +16,11 @@ config.sample_rate = 1.0
 config.fp16 = True
 config.momentum = 0.9
 config.weight_decay = 5e-4
+
+config.batch_size = 64
 # config.batch_size = 128
-config.batch_size = 256
+# config.batch_size = 256
+
 config.lr = 0.1
 config.verbose = 2000
 # config.verbose = 10
@@ -36,23 +39,33 @@ config.train_rule = None             # default
 
 if uname.nodename == 'duo':
     # config.rec = "/train_tmp/faces_emore"
-    # config.rec = '/datasets2/frcsyn_wacv2024/datasets/real/1_CASIA-WebFace/faces_webface_112x112'     # duo
-    config.rec = '/datasets2/frcsyn_wacv2024/datasets/real/1_CASIA-WebFace/imgs_crops_112x112'          # duo
+    config.rec = '/datasets2/2nd_frcsyn_cvpr2024/datasets/real/CASIA-WebFace/faces_webface_112x112'
 
     # config.val_targets = ['lfw', 'cfp_fp', "agedb_30"]
     # config.val_targets = ['']
     # config.val_targets = ['bupt']
-    config.val_targets = ['/datasets2/frcsyn_wacv2024/datasets/real/1_CASIA-WebFace/faces_webface_112x112/lfw.bin', '/datasets2/frcsyn_wacv2024/datasets/real/1_CASIA-WebFace/faces_webface_112x112/cfp_fp.bin', '/datasets2/frcsyn_wacv2024/datasets/real/1_CASIA-WebFace/faces_webface_112x112/agedb_30.bin', 'bupt']
-    config.val_dataset_dir = ['/datasets2/frcsyn_wacv2024/datasets/real/3_BUPT-BalancedFace/race_per_7000_crops_112x112']
-    config.val_protocol_path = ['/datasets2/frcsyn_wacv2024/comparison_files/comparison_files/sub-tasks_1.1_1.2/bupt_comparison.txt']
+    config.val_targets = ['/datasets2/2nd_frcsyn_cvpr2024/datasets/real/CASIA-WebFace/faces_webface_112x112/lfw.bin', '/datasets2/2nd_frcsyn_cvpr2024/datasets/real/CASIA-WebFace/faces_webface_112x112/cfp_fp.bin', '/datasets2/2nd_frcsyn_cvpr2024/datasets/real/CASIA-WebFace/faces_webface_112x112/agedb_30.bin', 'bupt']
+    config.val_dataset_dir = ['/datasets2/1st_frcsyn_wacv2024/datasets/real/3_BUPT-BalancedFace/race_per_7000_crops_112x112']
+    config.val_protocol_path = ['/datasets2/2nd_frcsyn_cvpr2024/comparison_files/comparison_files_2/sub-tasks_1.1_1.2_1.3/bupt_comparison.txt']
+
+elif uname.nodename == 'daugman':
+    # config.rec = "/train_tmp/faces_emore"
+    config.rec = '/groups/unico/2nd_frcsyn_cvpr2024/datasets/real/CASIA-WebFace/faces_webface_112x112'
+
+    # config.val_targets = ['lfw', 'cfp_fp', "agedb_30"]
+    # config.val_targets = ['']
+    # config.val_targets = ['bupt']
+    config.val_targets = ['/groups/unico/2nd_frcsyn_cvpr2024/datasets/real/CASIA-WebFace/faces_webface_112x112/lfw.bin', '/groups/unico/2nd_frcsyn_cvpr2024/datasets/real/CASIA-WebFace/faces_webface_112x112/cfp_fp.bin', '/groups/unico/2nd_frcsyn_cvpr2024/datasets/real/CASIA-WebFace/faces_webface_112x112/agedb_30.bin', 'bupt']
+    config.val_dataset_dir = ['/groups/unico/1st_frcsyn_wacv2024/datasets/real/3_BUPT-BalancedFace/race_per_7000_crops_112x112']
+    config.val_protocol_path = ['/groups/unico/2nd_frcsyn_cvpr2024/comparison_files/comparison_files_2/sub-tasks_1.1_1.2_1.3/bupt_comparison.txt']
 
 elif uname.nodename == 'diolkos':
-    config.rec = '/nobackup/unico/frcsyn_wacv2024/datasets/real/1_CASIA-WebFace/imgs_crops_112x112'   # diolkos
+    config.rec = '/nobackup/unico/1st_frcsyn_wacv2024/datasets/real/1_CASIA-WebFace/imgs_crops_112x112'
 
-    config.val_targets = ['/home/bjgbiesseck/datasets/frcsyn_wacv2024/faces_webface_112x112/lfw.bin', '/home/bjgbiesseck/datasets/frcsyn_wacv2024/faces_webface_112x112/cfp_fp.bin', '/home/bjgbiesseck/datasets/frcsyn_wacv2024/faces_webface_112x112/agedb_30.bin', 'bupt']
+    config.val_targets = ['/home/bjgbiesseck/datasets/1st_frcsyn_wacv2024/faces_webface_112x112/lfw.bin', '/home/bjgbiesseck/datasets/1st_frcsyn_wacv2024/faces_webface_112x112/cfp_fp.bin', '/home/bjgbiesseck/datasets/1st_frcsyn_wacv2024/faces_webface_112x112/agedb_30.bin', 'bupt']
     # config.val_targets = ['bupt']
-    config.val_dataset_dir = ['/nobackup/unico/frcsyn_wacv2024/datasets/real/3_BUPT-BalancedFace/race_per_7000_crops_112x112']
-    config.val_protocol_path = ['/nobackup/unico/frcsyn_wacv2024/comparison_files/comparison_files/sub-tasks_1.1_1.2/bupt_comparison.txt']
+    config.val_dataset_dir = ['/nobackup/unico/1st_frcsyn_wacv2024/datasets/real/3_BUPT-BalancedFace/race_per_7000_crops_112x112']
+    config.val_protocol_path = ['/nobackup/unico/1st_frcsyn_wacv2024/comparison_files/comparison_files/sub-tasks_1.1_1.2/bupt_comparison.txt']
 
 else:
     raise Exception(f'Paths of train and val datasets could not be found in file \'{__file__}\'')
@@ -76,8 +89,8 @@ config.wandb_key = "d7664714c72bd594a957381812da450279f80f66"
 
 config.suffix_run_name = None
 
-# config.using_wandb = False
-config.using_wandb = True
+config.using_wandb = False
+# config.using_wandb = True
 
 # config.wandb_entity = "entity"
 config.wandb_entity = "bovifocr"
