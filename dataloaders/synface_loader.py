@@ -113,6 +113,12 @@ class SYNFace_loader(Dataset):
         img_bgr = cv2.imread(img_path)
         img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
         return img_rgb.astype(np.float32)
+    
+
+    def pad_img(self, rgb_data, target_size=112):
+        rgb_data_pad = cv2.copyMakeBorder(rgb_data, top=0, bottom=0, left=8, right=8, borderType=cv2.BORDER_CONSTANT, value=(0,0,0))
+        return rgb_data_pad
+
 
 
     def __getitem__(self, index):
@@ -133,6 +139,7 @@ class SYNFace_loader(Dataset):
 
         if img_path.endswith('.jpg') or img_path.endswith('.jpeg') or img_path.endswith('.png'):
             rgb_data = self.load_img(img_path)
+            rgb_data = self.pad_img(rgb_data, target_size=112)
             rgb_data = self.normalize_img(rgb_data)
 
         # return (rgb_data, subj_idx)
