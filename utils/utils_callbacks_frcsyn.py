@@ -100,11 +100,12 @@ class CallBackVerification(object):
 
 
 class CallBackLogging(object):
-    def __init__(self, frequent, total_step, batch_size, start_step=0,writer=None):
+    def __init__(self, frequent, num_epoch, total_step, batch_size, start_step=0, writer=None):
         self.frequent: int = frequent
         self.rank: int = distributed.get_rank()
         self.world_size: int = distributed.get_world_size()
         self.time_start = time.time()
+        self.num_epoch: int = num_epoch
         self.total_step: int = total_step
         self.start_step: int = start_step
         self.batch_size: int = batch_size
@@ -141,15 +142,15 @@ class CallBackLogging(object):
                     self.writer.add_scalar('learning_rate', learning_rate, global_step)
                     self.writer.add_scalar('loss', loss.avg, global_step)
                 if fp16:
-                    msg = "Speed %.2f samples/sec   Loss %.4f   LearningRate %.6f   Epoch: %d   Global Step: %d   " \
+                    msg = "Speed %.2f samples/sec   Loss %.4f   LearningRate %.6f   Epoch: %d/%d   Global Step: %d   " \
                           "Fp16 Grad Scale: %2.f   Required: %1.f hours" % (
-                              speed_total, loss.avg, learning_rate, epoch, global_step,
+                              speed_total, loss.avg, learning_rate, epoch, self.num_epoch, global_step,
                               grad_scaler.get_scale(), time_for_end
                           )
                 else:
-                    msg = "Speed %.2f samples/sec   Loss %.4f   LearningRate %.6f   Epoch: %d   Global Step: %d   " \
+                    msg = "Speed %.2f samples/sec   Loss %.4f   LearningRate %.6f   Epoch: %d/%d   Global Step: %d   " \
                           "Required: %1.f hours" % (
-                              speed_total, loss.avg, learning_rate, epoch, global_step, time_for_end
+                              speed_total, loss.avg, learning_rate, epoch, self.num_epoch, global_step, time_for_end
                           )
                 logging.info(msg)
                 loss.reset()

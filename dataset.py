@@ -18,6 +18,9 @@ from utils.utils_distributed_sampler import get_dist_info, worker_init_fn
 from dataloaders.casiawebface_loader import CASIAWebFace_loader
 from dataloaders.gandiffface_loader import GANDiffFace_loader
 from dataloaders.dcface_loader import DCFace_loader
+from dataloaders.idiffface_loader import IDiffFace_loader
+from dataloaders.sface_loader import SFace_loader
+from dataloaders.synface_loader import SYNFace_loader
 
 
 def get_dataloader(
@@ -45,6 +48,15 @@ def get_dataloader(
                 train_set = DCFace_loader(r_dir, transform, train_set)
             elif 'GANDiffFace'.lower() in r_dir.lower():
                 train_set = GANDiffFace_loader(r_dir, transform, train_set)
+            elif 'IDiff-Face'.lower() in r_dir.lower():
+                dataset_name = 'idiffface_' + r_dir.split('/')[-1]
+                train_set = IDiffFace_loader(dataset_name, r_dir, transform, train_set)
+            elif 'SFace'.lower() in r_dir.lower():
+                dataset_name = 'sface' + r_dir.split('/')[-1]
+                train_set = SFace_loader(dataset_name, r_dir, transform, train_set)
+            elif 'SYNFace'.lower() in r_dir.lower():
+                dataset_name = 'synface' + r_dir.split('/')[-1]
+                train_set = SYNFace_loader(dataset_name, r_dir, transform, train_set)
             else:
                 raise Exception(f'Dataset \'{r_dir}\' not identified!')
 

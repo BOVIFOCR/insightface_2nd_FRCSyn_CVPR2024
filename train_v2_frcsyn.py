@@ -212,6 +212,7 @@ def main(args):
     )
     callback_logging = CallBackLogging(
         frequent=cfg.frequent,
+        num_epoch=cfg.num_epoch,
         total_step=cfg.total_step,
         batch_size=cfg.batch_size,
         start_step = global_step,
