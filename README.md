@@ -1,8 +1,10 @@
 ## INFERENCE WITH PRE-TRAINED MODELS (BOVIFOCR)
 
 #### 1. Clone this repo:
-- `git clone https://github.com/BOVIFOCR/insightface_2nd_FRCSyn_CVPR2024.git`
-- `cd insightface_2nd_FRCSyn_CVPR2024` 
+```
+git clone https://github.com/BOVIFOCR/insightface_2nd_FRCSyn_CVPR2024.git
+cd insightface_2nd_FRCSyn_CVPR2024
+```
 
 #### 2. Create conda env and install python libs:
 ```
