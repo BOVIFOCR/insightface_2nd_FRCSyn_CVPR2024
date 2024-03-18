@@ -1,16 +1,19 @@
 ## INFERENCE WITH PRE-TRAINED MODELS (BOVIFOCR)
 
 #### 1. Clone this repo:
-- `git clone https://github.com/BOVIFOCR/insightface.git`
-- `cd insightface/recognition/arcface_torch` 
+- `git clone https://github.com/BOVIFOCR/insightface_2nd_FRCSyn_CVPR2024.git`
+- `cd insightface_2nd_FRCSyn_CVPR2024` 
 
 #### 2. Create conda env and install python libs:
-- `conda create -n insightface python=3.7`
-- `conda activate insightface`
-- `conda env config vars set CUDA_HOME="/usr/local/cuda"; conda deactivate; conda activate insightface`
-- `conda env config vars set LD_LIBRARY_PATH="$CUDA_HOME/lib64"; conda deactivate; conda activate insightface`
-- `conda env config vars set PATH="$CUDA_HOME:$CUDA_HOME/bin:$LD_LIBRARY_PATH:$PATH"; conda deactivate; conda activate insightface`
-- `pip3 install -r requirements.txt`
+```
+ENV=insightface_2nd_frcsyn_py37
+conda create -n $ENV python=3.7
+conda activate $ENV
+conda env config vars set CUDA_HOME="/usr/local/cuda-11.2"; conda deactivate; conda activate $ENV
+conda env config vars set LD_LIBRARY_PATH="$CUDA_HOME/lib64"; conda deactivate; conda activate $ENV
+conda env config vars set PATH="$CUDA_HOME:$CUDA_HOME/bin:$LD_LIBRARY_PATH:$PATH"; conda deactivate; conda activate $ENV
+pip3 install -r requirements.txt
+```
 
 #### 3. Download pre-trained model:
 - [OneDrive](https://1drv.ms/u/s!AswpsDO2toNKq0lWY69vN58GR6mw?e=p9Ov5d)
