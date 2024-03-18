@@ -116,7 +116,10 @@ class SYNFace_loader(Dataset):
     
 
     def pad_img(self, rgb_data, target_size=112):
-        rgb_data_pad = cv2.copyMakeBorder(rgb_data, top=0, bottom=0, left=8, right=8, borderType=cv2.BORDER_CONSTANT, value=(0,0,0))
+        diff_rows, diff_cols = target_size-rgb_data.shape[0], target_size-rgb_data.shape[1]
+        rgb_data_pad = cv2.copyMakeBorder(rgb_data,
+                                          top=int(diff_rows/2), bottom=int(diff_rows/2), left=int(diff_cols/2), right=int(diff_cols/2),
+                                          borderType=cv2.BORDER_CONSTANT, value=(0,0,0))
         return rgb_data_pad
 
 
@@ -139,7 +142,8 @@ class SYNFace_loader(Dataset):
 
         if img_path.endswith('.jpg') or img_path.endswith('.jpeg') or img_path.endswith('.png'):
             rgb_data = self.load_img(img_path)
-            rgb_data = self.pad_img(rgb_data, target_size=112)
+            if rgb_data.shape[0] < 112 or rgb_data.shape[1] < 112:
+                rgb_data = self.pad_img(rgb_data, target_size=112)
             rgb_data = self.normalize_img(rgb_data)
 
         # return (rgb_data, subj_idx)
