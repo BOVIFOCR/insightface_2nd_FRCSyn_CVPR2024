@@ -33,6 +33,7 @@ class IDiffFace_loader(Dataset):
             raise Exception(f'Dataset path does not exists: \'{root_dir}\'')
 
         self.root_dir = root_dir
+        self.transform = transform
         # self.file_ext = '.jpg'
         self.file_ext = '.png'
         self.path_files = ud.find_files(self.root_dir, self.file_ext)
@@ -102,7 +103,7 @@ class IDiffFace_loader(Dataset):
 
 
     def normalize_img(self, img):
-        img = np.transpose(img, (2, 0, 1))  # from (112,112,3) to (3,112,112)
+        # img = np.transpose(img, (2, 0, 1))  # from (112,112,3) to (3,112,112)
         img = ((img/255.)-0.5)/0.5
         # print('img:', img)
         # sys.exit(0)
@@ -112,7 +113,8 @@ class IDiffFace_loader(Dataset):
     def load_img(self, img_path):
         img_bgr = cv2.imread(img_path)
         img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-        return img_rgb.astype(np.float32)
+        # return img_rgb.astype(np.float32)
+        return img_rgb
 
 
     def __getitem__(self, index):
@@ -133,7 +135,13 @@ class IDiffFace_loader(Dataset):
 
         if img_path.endswith('.jpg') or img_path.endswith('.jpeg') or img_path.endswith('.png'):
             rgb_data = self.load_img(img_path)
-            rgb_data = self.normalize_img(rgb_data)
+            if self.transform is not None:
+                rgb_data = self.transform(rgb_data)
+                rgb_data = self.normalize_img(rgb_data)
+                if rgb_data.shape[0] == 1:  # gray scale
+                    rgb_data = rgb_data.repeat(3, 1, 1)
+            # else:
+            #     rgb_data = self.normalize_img(rgb_data)
 
         # return (rgb_data, subj_idx)
         # return (rgb_data, race_idx)

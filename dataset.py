@@ -32,10 +32,26 @@ def get_dataloader(
     num_workers = 2,
     ) -> Iterable:
 
+    # transform = transforms.Compose([
+    #                 transforms.RandomHorizontalFlip(),
+    #                 transforms.ToTensor(),
+    #                 transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    #                 ])
+
     transform = transforms.Compose([
+                    transforms.ToPILImage(),
+                    transforms.RandomApply(transforms=[transforms.Resize(size=50),
+                                                       transforms.ColorJitter(brightness=.5, hue=.3),
+                                                       transforms.Grayscale(),
+                                                       transforms.RandomPerspective(distortion_scale=0.6, p=1.0),
+                                                       transforms.RandomPosterize(bits=2),
+                                                       transforms.RandomAutocontrast(),
+                                                       transforms.TrivialAugmentWide(),
+                                                       ], p=0.5),
                     transforms.RandomHorizontalFlip(),
+                    transforms.Resize(size=112),
                     transforms.ToTensor(),
-                    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+                    # transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
                     ])
 
     if type(root_dir) == list:

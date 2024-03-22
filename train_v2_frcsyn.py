@@ -45,6 +45,7 @@ except KeyError:
 def main(args):
 
     run_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S") + f"_GPU{rank}"  # Bernardo
+    run_name += f'_{args.annotation}' if args.annotation != '' else ''  # Bernardo
 
     # get config
     cfg = get_config(args.config, run_name)
@@ -309,4 +310,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Distributed Arcface Training in Pytorch")
     parser.add_argument("config", type=str, help="py config file")
+    parser.add_argument("--annotation", default="", type=str, help="py config file")
     main(parser.parse_args())
