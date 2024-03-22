@@ -1,5 +1,5 @@
 import numbers
-import os
+import os, sys
 import queue as Queue
 import threading
 from typing import Iterable
@@ -18,6 +18,7 @@ from utils.utils_distributed_sampler import get_dist_info, worker_init_fn
 from dataloaders.casiawebface_loader import CASIAWebFace_loader
 from dataloaders.gandiffface_loader import GANDiffFace_loader
 from dataloaders.dcface_loader import DCFace_loader
+from dataloaders.dcface_oversample_xid_loader import DCFace_OversampleXid_loader
 from dataloaders.idiffface_loader import IDiffFace_loader
 from dataloaders.sface_loader import SFace_loader
 from dataloaders.synface_loader import SYNFace_loader
@@ -60,6 +61,8 @@ def get_dataloader(
             print(f'Loading train dataset \'{r_dir}\' ...')
             if 'CASIA-WebFace'.lower() in r_dir.lower():
                 train_set = CASIAWebFace_loader(r_dir, transform, train_set)
+            elif 'DCFace'.lower() in r_dir.lower() and 'oversample_xid'.lower() in r_dir.lower():
+                train_set = DCFace_OversampleXid_loader(r_dir, transform, train_set)
             elif 'DCFace'.lower() in r_dir.lower():
                 train_set = DCFace_loader(r_dir, transform, train_set)
             elif 'GANDiffFace'.lower() in r_dir.lower():
@@ -103,6 +106,9 @@ def get_dataloader(
             elif 'GANDiffFace'.lower() in root_dir.lower():
                 print(f'Loading train dataset \'{root_dir}\' ...')
                 train_set = GANDiffFace_loader(root_dir, transform)
+
+            elif 'DCFace'.lower() in root_dir.lower() and 'oversample_xid'.lower() in root_dir.lower():
+                train_set = DCFace_OversampleXid_loader(root_dir, transform)
 
             elif 'DCFace'.lower() in root_dir.lower():
                 print(f'Loading train dataset \'{root_dir}\' ...')
