@@ -5,6 +5,7 @@ from PIL import Image
 from torch.utils.data import DataLoader, Dataset
 from torchvision import transforms
 import random
+import pickle
 
 try:
     from . import utils_dataloaders as ud
@@ -39,6 +40,10 @@ class IDiffFace_loader(Dataset):
         self.path_files = ud.find_files(self.root_dir, self.file_ext)
         self.path_files = self.append_dataset_name(self.path_files, dataset_name=dataset_name)
         self.subjs_list, self.subjs_dict = self.get_subj_list_dict(self.path_files)
+        self.ages_dict = {'(0-2)':0, '(4-6)':1, '(8-12)':2, '(15-20)':3, '(25-32)':4, '(38-43)':5, '(48-53)':6, '(60-100)':7}
+        self.genders_dict = {'Male':0, 'Female':1}
+        self.races_dict = {'asian':0, 'indian':1, 'black':2, 'white':3, 'middle eastern':4, 'latino hispanic':5}
+        
         print('    num_classes (this dataset):', len(self.subjs_dict))
 
         self.samples_list = self.make_samples_list_with_labels(self.path_files, self.subjs_list, self.subjs_dict)
@@ -58,7 +63,7 @@ class IDiffFace_loader(Dataset):
         # print('len(self.subjs_dict)', len(self.subjs_dict))
         print('    num_total_classes (all datasets):', len(self.subjs_dict))        
 
-        self.final_samples_list = self.replace_strings_labels_by_int_labels(self.samples_list, self.subjs_dict)
+        self.final_samples_list = self.replace_strings_labels_by_int_labels(self.samples_list, self.subjs_dict, self.ages_dict, self.genders_dict, self.races_dict)
         # print('self.final_samples_list', self.final_samples_list)
         # print('len(self.final_samples_list)', len(self.final_samples_list))
         random.shuffle(self.final_samples_list)
@@ -85,25 +90,35 @@ class IDiffFace_loader(Dataset):
         for i, (path_file, dataset_name) in enumerate(path_files):        # ('/datasets1/bjgbiesseck/SDFR_at_FG2024/datasets/synthetic/IDiff-Face_ICCV2023/ca-cpd25-synthetic-uniform-10050/0/0_0.png', 'idiffface_ca-cpd25-synthetic-uniform-10050')
             subj = dataset_name + '_' + path_file.split('/')[-2]          # 'idiffface_ca-cpd25-synthetic-uniform-10050_0'
             subjs_dict_num_samples[subj] += 1
-            samples_list[i] = (dataset_name, path_file, subj)
+
+            items_path_file = path_file.split('/')
+            items_path_file[-3] += '_FACE_ATTRIB'
+            items_path_file[-1] = items_path_file[-1].split('.')[0] + '.pkl'
+            path_attrib_file = '/'.join(items_path_file)
+            assert os.path.isfile(path_attrib_file), f'Error, file not found \'{path_attrib_file}\''
+
+            samples_list[i] = (dataset_name, path_file, path_attrib_file, subj)
         return samples_list
 
 
-    def replace_strings_labels_by_int_labels(self, samples_list, subjs_dict):
+    def replace_strings_labels_by_int_labels(self, samples_list, subjs_dict, ages_dict, genders_dict, races_dict):
         final_samples_list = [None] * len(samples_list)
         for i in range(len(final_samples_list)):
             # print(f'samples_list[{i}]: {samples_list[i]}')
-            dataset_name, path_file, subj = samples_list[i]
+            dataset_name, path_file, path_attrib_file, subj = samples_list[i]
             subj_idx = subjs_dict[subj] if not subjs_dict is None else -1
-            # race_idx = races_dict[race] if not races_dict is None else -1
-            # gender_idx = genders_dict[gender] if not genders_dict is None else -1
-            final_samples_list[i] = (dataset_name, path_file, subj_idx)
+
+            attrib_data = self.load_pkl(path_attrib_file)
+            age_idx = ages_dict[attrib_data['age']] if not ages_dict is None else -1
+            gender_idx = genders_dict[attrib_data['gender']] if not genders_dict is None else -1
+            race_idx = races_dict[attrib_data['race']['dominant_race']] if not races_dict is None else -1
+            final_samples_list[i] = (dataset_name, path_file, subj_idx, age_idx, gender_idx, race_idx)
             # print(f'final_samples_list[{i}]: {final_samples_list[i]}')
         return final_samples_list
 
 
     def normalize_img(self, img):
-        # img = np.transpose(img, (2, 0, 1))  # from (112,112,3) to (3,112,112)
+        img = np.transpose(img, (2, 0, 1))  # from (112,112,3) to (3,112,112)
         img = ((img/255.)-0.5)/0.5
         # print('img:', img)
         # sys.exit(0)
@@ -113,8 +128,13 @@ class IDiffFace_loader(Dataset):
     def load_img(self, img_path):
         img_bgr = cv2.imread(img_path)
         img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-        # return img_rgb.astype(np.float32)
-        return img_rgb
+        return img_rgb.astype(np.float32)
+    
+
+    def load_pkl(self, path):
+        with open(path, 'rb') as f:
+            data = pickle.load(f)
+            return data
 
 
     def __getitem__(self, index):
@@ -131,21 +151,22 @@ class IDiffFace_loader(Dataset):
         # return sample, label
 
         # Bernardo
-        dataset_name, img_path, subj_idx = self.final_samples_list[index]
+        dataset_name, img_path, subj_idx, age_idx, gender_idx, race_idx = self.final_samples_list[index]
 
         if img_path.endswith('.jpg') or img_path.endswith('.jpeg') or img_path.endswith('.png'):
             rgb_data = self.load_img(img_path)
             if self.transform is not None:
+                rgb_data = Image.fromarray(rgb_data)
                 rgb_data = self.transform(rgb_data)
-                rgb_data = self.normalize_img(rgb_data)
+                # rgb_data = self.normalize_img(rgb_data)
                 if rgb_data.shape[0] == 1:  # gray scale
                     rgb_data = rgb_data.repeat(3, 1, 1)
-            # else:
-            #     rgb_data = self.normalize_img(rgb_data)
+            else:
+                rgb_data = self.normalize_img(rgb_data)
 
         # return (rgb_data, subj_idx)
         # return (rgb_data, race_idx)
-        return (rgb_data, subj_idx)
+        return (rgb_data, subj_idx, age_idx, gender_idx, race_idx)
 
 
     def __len__(self):

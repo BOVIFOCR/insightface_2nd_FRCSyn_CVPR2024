@@ -33,27 +33,27 @@ def get_dataloader(
     num_workers = 2,
     ) -> Iterable:
 
-    # transform = transforms.Compose([
-    #                 transforms.RandomHorizontalFlip(),
-    #                 transforms.ToTensor(),
-    #                 transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
-    #                 ])
-
     transform = transforms.Compose([
-                    transforms.ToPILImage(),
-                    transforms.RandomApply(transforms=[transforms.Resize(size=50),
-                                                       transforms.ColorJitter(brightness=.5, hue=.3),
-                                                       transforms.Grayscale(),
-                                                       transforms.RandomPerspective(distortion_scale=0.6, p=1.0),
-                                                       transforms.RandomPosterize(bits=2),
-                                                       transforms.RandomAutocontrast(),
-                                                       transforms.TrivialAugmentWide(),
-                                                       ], p=0.5),
                     transforms.RandomHorizontalFlip(),
-                    transforms.Resize(size=112),
                     transforms.ToTensor(),
-                    # transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+                    transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
                     ])
+
+    # transform = transforms.Compose([
+    #                 transforms.ToPILImage(),
+    #                 transforms.RandomApply(transforms=[transforms.Resize(size=50),
+    #                                                    transforms.ColorJitter(brightness=.5, hue=.3),
+    #                                                    transforms.Grayscale(),
+    #                                                    transforms.RandomPerspective(distortion_scale=0.6, p=1.0),
+    #                                                    transforms.RandomPosterize(bits=2),
+    #                                                    transforms.RandomAutocontrast(),
+    #                                                    transforms.TrivialAugmentWide(),
+    #                                                    ], p=0.5),
+    #                 transforms.RandomHorizontalFlip(),
+    #                 transforms.Resize(size=112),
+    #                 transforms.ToTensor(),
+    #                 # transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+    #                 ])
 
     if type(root_dir) == list:
         train_set = None
@@ -62,14 +62,16 @@ def get_dataloader(
             if 'CASIA-WebFace'.lower() in r_dir.lower():
                 train_set = CASIAWebFace_loader(r_dir, transform, train_set)
             elif 'DCFace'.lower() in r_dir.lower() and 'oversample_xid'.lower() in r_dir.lower():
-                train_set = DCFace_OversampleXid_loader(r_dir, transform, train_set)
+                # train_set = DCFace_OversampleXid_loader(r_dir, transform, train_set)
+                train_set = DCFace_OversampleXid_loader(r_dir, None, train_set)
             elif 'DCFace'.lower() in r_dir.lower():
                 train_set = DCFace_loader(r_dir, transform, train_set)
             elif 'GANDiffFace'.lower() in r_dir.lower():
                 train_set = GANDiffFace_loader(r_dir, transform, train_set)
             elif 'IDiff-Face'.lower() in r_dir.lower():
                 dataset_name = 'idiffface_' + r_dir.split('/')[-1]
-                train_set = IDiffFace_loader(dataset_name, r_dir, transform, train_set)
+                # train_set = IDiffFace_loader(dataset_name, r_dir, transform, train_set)
+                train_set = IDiffFace_loader(dataset_name, r_dir, None, train_set)
             elif 'SFace'.lower() in r_dir.lower():
                 dataset_name = 'sface' + r_dir.split('/')[-1]
                 train_set = SFace_loader(dataset_name, r_dir, transform, train_set)

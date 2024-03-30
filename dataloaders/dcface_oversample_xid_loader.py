@@ -112,7 +112,7 @@ class DCFace_OversampleXid_loader(Dataset):
 
 
     def normalize_img(self, img):
-        # img = np.transpose(img, (2, 0, 1))  # from (112,112,3) to (3,112,112)
+        img = np.transpose(img, (2, 0, 1))  # from (112,112,3) to (3,112,112)
         img = ((img/255.)-0.5)/0.5
         # print('img:', img)
         # sys.exit(0)
@@ -122,8 +122,7 @@ class DCFace_OversampleXid_loader(Dataset):
     def load_img(self, img_path):
         img_bgr = cv2.imread(img_path)
         img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-        # return img_rgb.astype(np.float32)
-        return img_rgb
+        return img_rgb.astype(np.float32)
 
 
     def __getitem__(self, index):

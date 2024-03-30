@@ -115,6 +115,7 @@ class CallBackLogging(object):
         self.tic = 0
 
     def __call__(self,
+                 label,
                  global_step: int,
                  loss: AverageMeter,
                  epoch: int,
@@ -140,17 +141,17 @@ class CallBackLogging(object):
                 if self.writer is not None:
                     self.writer.add_scalar('time_for_end', time_for_end, global_step)
                     self.writer.add_scalar('learning_rate', learning_rate, global_step)
-                    self.writer.add_scalar('loss', loss.avg, global_step)
+                    self.writer.add_scalar(f'loss_{label}', loss.avg, global_step)
                 if fp16:
-                    msg = "Speed %.2f samples/sec   Loss %.4f   LearningRate %.6f   Epoch: %d/%d   Global Step: %d   " \
+                    msg = "Speed %.2f samples/sec   Loss (%s) %.4f   LearningRate %.6f   Epoch: %d/%d   Global Step: %d   " \
                           "Fp16 Grad Scale: %2.f   Required: %1.f hours" % (
-                              speed_total, loss.avg, learning_rate, epoch, self.num_epoch, global_step,
+                              speed_total, label, loss.avg, learning_rate, epoch, self.num_epoch, global_step,
                               grad_scaler.get_scale(), time_for_end
                           )
                 else:
-                    msg = "Speed %.2f samples/sec   Loss %.4f   LearningRate %.6f   Epoch: %d/%d   Global Step: %d   " \
+                    msg = "Speed %.2f samples/sec   Loss (%s) %.4f   LearningRate %.6f   Epoch: %d/%d   Global Step: %d   " \
                           "Required: %1.f hours" % (
-                              speed_total, loss.avg, learning_rate, epoch, self.num_epoch, global_step, time_for_end
+                              speed_total, label, loss.avg, learning_rate, epoch, self.num_epoch, global_step, time_for_end
                           )
                 logging.info(msg)
                 loss.reset()
