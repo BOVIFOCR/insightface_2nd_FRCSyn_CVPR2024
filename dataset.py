@@ -62,8 +62,9 @@ def get_dataloader(
             if 'CASIA-WebFace'.lower() in r_dir.lower():
                 train_set = CASIAWebFace_loader(r_dir, transform, train_set)
             elif 'DCFace'.lower() in r_dir.lower() and 'oversample_xid'.lower() in r_dir.lower():
+                dataset_name = 'dcface_' + r_dir.split('/')[-3]
                 # train_set = DCFace_OversampleXid_loader(r_dir, transform, train_set)
-                train_set = DCFace_OversampleXid_loader(r_dir, None, train_set)
+                train_set = DCFace_OversampleXid_loader(dataset_name, r_dir, None, train_set)
             elif 'DCFace'.lower() in r_dir.lower():
                 train_set = DCFace_loader(r_dir, transform, train_set)
             elif 'GANDiffFace'.lower() in r_dir.lower():

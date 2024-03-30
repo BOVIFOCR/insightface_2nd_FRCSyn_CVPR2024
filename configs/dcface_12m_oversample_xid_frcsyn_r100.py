@@ -40,7 +40,7 @@ config.train_rule = None             # default
 
 if uname.nodename == 'duo':
     # config.rec = "/train_tmp/faces_emore"
-    config.rec = ['/datasets2/2nd_frcsyn_cvpr2024/datasets/synthetic/dcface/dcface_0.5m_oversample_xid/record/imgs']      # duo
+    config.rec = '/datasets2/2nd_frcsyn_cvpr2024/datasets/synthetic/dcface/dcface_0.5m_oversample_xid/record/imgs'      # duo
 
     # config.val_targets = ['lfw', 'cfp_fp', "agedb_30"]
     # config.val_targets = ['']
@@ -57,10 +57,10 @@ elif uname.nodename == 'diolkos':
     config.val_protocol_path = ['/nobackup/unico/frcsyn_wacv2024/comparison_files/comparison_files/sub-tasks_1.1_1.2/bupt_comparison.txt']
 
 elif uname.nodename == 'daugman':
-    config.rec = ['/groups/unico/2nd_frcsyn_cvpr2024/datasets/synthetic/dcface/dcface_0.5m_oversample_xid/record/imgs']
+    config.rec = '/groups/unico/2nd_frcsyn_cvpr2024/datasets/synthetic/dcface/dcface_1.2m_oversample_xid/record/imgs'
 
-    config.val_targets = ['/home/bjgbiesseck/datasets/real/1_CASIA-WebFace/faces_webface_112x112/lfw.bin', '/home/bjgbiesseck/datasets/real/1_CASIA-WebFace/faces_webface_112x112/cfp_fp.bin', '/home/bjgbiesseck/datasets/real/1_CASIA-WebFace/faces_webface_112x112/agedb_30.bin', 'bupt']
-    # config.val_targets = ['bupt']
+    # config.val_targets = ['']
+    config.val_targets = ['/groups/unico/2nd_frcsyn_cvpr2024/datasets/real/CASIA-WebFace/faces_webface_112x112/lfw.bin', '/groups/unico/2nd_frcsyn_cvpr2024/datasets/real/CASIA-WebFace/faces_webface_112x112/calfw.bin', '/groups/unico/2nd_frcsyn_cvpr2024/datasets/real/CASIA-WebFace/faces_webface_112x112/cplfw.bin', '/groups/unico/2nd_frcsyn_cvpr2024/datasets/real/CASIA-WebFace/faces_webface_112x112/agedb_30.bin', '/groups/unico/2nd_frcsyn_cvpr2024/datasets/real/CASIA-WebFace/faces_webface_112x112/cfp_fp.bin', 'bupt']
     config.val_dataset_dir = ['/home/bjgbiesseck/datasets/real/3_BUPT-BalancedFace/race_per_7000_crops_112x112']
     config.val_protocol_path = ['/groups/unico/frcsyn_wacv2024/comparison_files/comparison_files/sub-tasks_1.1_1.2/bupt_comparison.txt']
 
