@@ -771,7 +771,7 @@ def save_scores_pred_labels_frcsyn_format(file_path, float_array, int_array):
 
 
 
-def evaluate_analyze_races(args, embeddings, actual_issame, races_list, subj_list, nrof_folds=10, pca=0, races_combs=[]):
+def evaluate_analyze_races(args, name, embeddings, actual_issame, races_list, subj_list, nrof_folds=10, pca=0, races_combs=[]):
     # Calculate evaluation metrics
     thresholds = np.arange(0, 4, 0.01)
     if args.score == 'cos-sim':
@@ -842,7 +842,7 @@ def evaluate_analyze_races(args, embeddings, actual_issame, races_list, subj_lis
                                                         subj_list,
                                                         races_combs=races_combs)
 
-        file_scores_labels = args.model.split('/')[-1].split('.')[0] + '_target=' + args.target.split('/')[-1].split('.')[0] + f'_frcsyn_scores_labels_thresh={one_threshold}.txt'
+        file_scores_labels = args.model.split('/')[-1].split('.')[0] + '_target=' + name + f'_frcsyn_scores_labels_thresh={one_threshold}.txt'
         path_file_scores_labels = os.path.join(os.path.dirname(args.model), file_scores_labels)
         print(f'    Saving scores and pred labels at \'{path_file_scores_labels}\'...')
         save_scores_pred_labels_frcsyn_format(path_file_scores_labels, dist, pred_labels_at_thresh)
@@ -854,7 +854,7 @@ def evaluate_analyze_races(args, embeddings, actual_issame, races_list, subj_lis
 
 
 @torch.no_grad()
-def test_analyze_races(args, data_set, backbone, batch_size, nfolds=10, races_combs=[]):
+def test_analyze_races(args, name, data_set, backbone, batch_size, nfolds=10, races_combs=[]):
     data_list = data_set[0]
     issame_list = data_set[1]
     if len(data_set) > 2:
@@ -926,7 +926,7 @@ def test_analyze_races(args, data_set, backbone, batch_size, nfolds=10, races_co
     print('\nDoing races test evaluation...')
     # _, _, accuracy, val, val_std, far = evaluate(embeddings, issame_list, nrof_folds=nfolds)
     _, _, accuracy, val, val_std, far, fnmr_mean, fnmr_std, fmr_mean, avg_roc_metrics, avg_val_metrics, \
-        best_acc, best_thresh, acc_at_thresh = evaluate_analyze_races(args, embeddings, issame_list, races_list, subj_list, nrof_folds=nfolds, races_combs=races_combs)
+        best_acc, best_thresh, acc_at_thresh = evaluate_analyze_races(args, name, embeddings, issame_list, races_list, subj_list, nrof_folds=nfolds, races_combs=races_combs)
     acc2, std2 = np.mean(accuracy), np.std(accuracy)
     return acc1, std1, acc2, std2, _xnorm, embeddings_list, val, val_std, far, fnmr_mean, fnmr_std, fmr_mean, avg_roc_metrics, avg_val_metrics, \
             best_acc, best_thresh, acc_at_thresh
@@ -997,20 +997,22 @@ if __name__ == '__main__':
     # general
     # parser.add_argument('--data-dir', default='', help='')                                                                                   # original
     # parser.add_argument('--data-dir', default='/datasets1/bjgbiesseck/MS-Celeb-1M/faces_emore', help='')                                     # Bernardo
-    parser.add_argument('--data-dir', default='/datasets2/frcsyn_wacv2024/datasets/real/3_BUPT-BalancedFace/race_per_7000_112x112', help='')   # Bernardo
+    parser.add_argument('--data-dir', default='/datasets2/1st_frcsyn_wacv2024/datasets/real/3_BUPT-BalancedFace/race_per_7000_crops_112x112', help='')   # Bernardo
 
     parser.add_argument('--network', default='r100', type=str, help='')
     parser.add_argument('--model',
                         # default='../trained_models/ms1mv3_arcface_r100_fp16/backbone.pth',          # Bernardo
                         default='../work_dirs/casia_frcsyn_r100/2023-10-14_09-51-11_GPU0/model.pt',   # (Trained only on CASIA-Webface)   Bernardo
                         help='path to load model.')
+    '''
     parser.add_argument('--target',
                         # default='lfw,cfp_ff,cfp_fp,agedb_30',          # original
                         # default='lfw,cfp_fp,agedb_30',                 # original
                         # default='lfw',                                 # Bernardo
                         default='bupt',                                  # Bernardo
                         help='test targets.')
-    parser.add_argument('--protocol', default='/datasets2/frcsyn_wacv2024/comparison_files/comparison_files/sub-tasks_1.1_1.2/bupt_comparison.txt', type=str, help='')
+    '''
+    parser.add_argument('--protocol', default='/datasets2/2nd_frcsyn_cvpr2024/comparison_files/comparison_files_2/sub-tasks_1.1_1.2_1.3/bupt_comparison.txt', type=str, help='')
     parser.add_argument('--gpu', default=0, type=int, help='gpu id')
     parser.add_argument('--batch-size', default=32, type=int, help='')
     parser.add_argument('--max', default='', type=str, help='')
@@ -1053,38 +1055,53 @@ if __name__ == '__main__':
 
     ver_list = []
     ver_name_list = []
-    for name in args.target.split(','):
+    
+    # Bernardo
+    if '/lfw.bin' in args.data_dir.lower():
+        name = 'lfw'
+    elif '/cplfw.bin' in args.data_dir.lower():
+        name = 'cplfw'
+    elif '/calfw.bin' in args.data_dir.lower():
+        name = 'calfw'
+    elif '/agedb_30.bin' in args.data_dir.lower():
+        name = 'agedb_30'
+    elif '/cfp_fp.bin' in args.data_dir.lower():
+        name = 'cfp_fp'
+    elif '/cfp_ff.bin' in args.data_dir.lower():
+        name = 'cfp_ff'
+    elif 'bupt' in args.data_dir.lower():
+        name = 'bupt'
+        
+    print('\ndataset name:', name)
+    print('args.data_dir:', args.data_dir)
 
-        # Bernardo
-        print('\ndataset name:', name)
-        print('args.data_dir:', args.data_dir)
+    # path = os.path.join(args.data_dir, name + ".bin")
+    path = args.data_dir
+    if os.path.isfile(path):
+        print('loading.. ', name)
+        data_set = load_bin(path, image_size)
+        ver_list.append(data_set)
+        ver_name_list.append(name)
+        # sys.exit(0)
+    
+    else:
+        if name.lower() == 'bupt':
+            path_unified_dataset = os.path.join(args.data_dir, 'dataset.pkl')
+            if not os.path.exists(path_unified_dataset):
+                print(f'Loading individual images from folder \'{args.data_dir}\' ...')
+                data_set = Loader_BUPT().load_dataset(args.protocol, args.data_dir, image_size)
+                print(f'Saving dataset in file \'{path_unified_dataset}\' ...')
+                write_object_to_file(path_unified_dataset, data_set)
+            else:
+                print(f'Loading dataset from file \'{path_unified_dataset}\' ...')
+                data_set = read_object_from_file(path_unified_dataset)
 
-        path = os.path.join(args.data_dir, name + ".bin")
-        if os.path.exists(path):
-            print('loading.. ', name)
-            data_set = load_bin(path, image_size)
             ver_list.append(data_set)
             ver_name_list.append(name)
+            # print('data_set:', data_set)
             # sys.exit(0)
-        
         else:
-            if name.lower() == 'bupt':
-                path_unified_dataset = os.path.join(args.data_dir, 'dataset.pkl')
-                if not os.path.exists(path_unified_dataset):
-                    print(f'Loading individual images from folder \'{args.data_dir}\' ...')
-                    data_set = Loader_BUPT().load_dataset(args.protocol, args.data_dir, image_size)
-                    print(f'Saving dataset in file \'{path_unified_dataset}\' ...')
-                    write_object_to_file(path_unified_dataset, data_set)
-                else:
-                    print(f'Loading dataset from file \'{path_unified_dataset}\' ...')
-                    data_set = read_object_from_file(path_unified_dataset)
-
-                ver_list.append(data_set)
-                ver_name_list.append(name)
-                # print('data_set:', data_set)
-                # sys.exit(0)
-            else:
-                raise Exception(f'Error, no \'.bin\' file found in \'{args.data_dir}\'')
+            raise Exception(f'Error, no \'.bin\' file found in \'{args.data_dir}\'')
 
 
     if args.mode == 0:
@@ -1098,7 +1115,7 @@ if __name__ == '__main__':
                     races_combs = None
 
                 acc1, std1, acc2, std2, xnorm, embeddings_list, val, val_std, far, fnmr_mean, fnmr_std, fmr_mean, avg_roc_metrics, avg_val_metrics, \
-                        best_acc, best_thresh, acc_at_thresh = test_analyze_races(args, ver_list[i], model, args.batch_size, args.nfolds, races_combs)
+                        best_acc, best_thresh, acc_at_thresh = test_analyze_races(args, name, ver_list[i], model, args.batch_size, args.nfolds, races_combs)
                 results.append(acc2)
                 print('[%s]XNorm: %f' % (ver_name_list[i], xnorm))
                 # print('[%s]Accuracy: %1.5f+-%1.5f' % (ver_name_list[i], acc1, std1))
