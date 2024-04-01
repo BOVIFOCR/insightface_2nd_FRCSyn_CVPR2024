@@ -863,7 +863,8 @@ def test_analyze_races(args, name, data_set, backbone, batch_size, nfolds=10, ra
     else:
         races_list, subj_list = None, None
 
-    path_embeddings = os.path.join(args.data_dir, 'embeddings_list.pkl')
+    dir_embedd = os.path.dirname(args.data_dir) if os.path.isfile(args.data_dir)  else args.data_dir
+    path_embeddings = os.path.join(dir_embedd, 'embeddings_list.pkl')
 
     if not os.path.exists(path_embeddings) or not args.use_saved_embedd:
         print('\nComputing embeddings...')
