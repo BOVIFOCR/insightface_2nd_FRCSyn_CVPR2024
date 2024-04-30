@@ -39,7 +39,7 @@ config.train_rule = None             # default
 
 if uname.nodename == 'duo':
     # config.rec = "/train_tmp/faces_emore"
-    config.rec = '/datasets2/2nd_frcsyn_cvpr2024/datasets/real/CASIA-WebFace/faces_webface_112x112'
+    config.rec = '/datasets2/1st_frcsyn_wacv2024/datasets/real/1_CASIA-WebFace/imgs_crops_112x112'
 
     # config.val_targets = ['lfw', 'cfp_fp', "agedb_30"]
     # config.val_targets = ['']

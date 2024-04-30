@@ -767,7 +767,8 @@ def save_scores_pred_labels_frcsyn_format(file_path, float_array, int_array):
         raise ValueError("Both arrays must have the same length")
     with open(file_path, 'w') as file:
         for float_val, int_val in zip(float_array, int_array):
-            file.write(f"{float_val},{int_val}\n")
+            # file.write(f"{float_val},{int_val}\n")
+            file.write(f"{float_val}\n")
 
 
 

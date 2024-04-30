@@ -16,9 +16,9 @@ config.sample_rate = 1.0
 config.fp16 = True
 config.momentum = 0.9
 config.weight_decay = 5e-4
-config.batch_size = 128
+# config.batch_size = 128
 # config.batch_size = 64
-# config.batch_size = 32
+config.batch_size = 32
 config.lr = 0.1
 config.verbose = 2000
 # config.verbose = 10
@@ -74,7 +74,8 @@ config.num_classes = 10049
 config.num_image = 502450
 
 # config.num_epoch = 20
-config.num_epoch = 30
+# config.num_epoch = 30
+config.num_epoch = 60
 config.warmup_epoch = 0
 
 

@@ -9,9 +9,8 @@ import torch
 from backbones import get_model
 from dataset import get_dataloader
 from losses import CombinedMarginLoss
-from losses_frcsyn import LDAMLoss, FocalLoss
 from lr_scheduler import PolyScheduler
-from partial_fc_v2 import PartialFC_V2
+from partial_fc_v2 import PartialFC_V2, PartialFC_V2_INVERSE
 from torch import distributed
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -88,7 +87,7 @@ def main(args):
         except Exception as e:
             print("WandB Data (Entity and Project name) must be provided in config file (base.py).")
             print(f"Config Error: {e}")
-
+            
     train_loader = get_dataloader(
         cfg.rec,
         local_rank,
@@ -100,78 +99,80 @@ def main(args):
 
     backbone = get_model(
         cfg.network, dropout=0.0, fp16=cfg.fp16, num_features=cfg.embedding_size).cuda()
-
     backbone = torch.nn.parallel.DistributedDataParallel(
         module=backbone, broadcast_buffers=False, device_ids=[local_rank], bucket_cap_mb=16,
         find_unused_parameters=True)
-
     backbone.train()
     # FIXME using gradient checkpoint if there are some unused parameters will cause error
     backbone._set_static_graph()
 
+    # Discriminator of ethnic groups
+    backbone_race = get_model('mlp_1layer', input_size=512, output_size=256).cuda()
+    # backbone_race = get_model('mlp_2layers', input_size=512, hidden_size=256, output_size=256).cuda()
+    backbone_race = torch.nn.parallel.DistributedDataParallel(
+        module=backbone_race, broadcast_buffers=False, device_ids=[local_rank], bucket_cap_mb=16,
+        find_unused_parameters=True)
+    backbone_race.train()
+    backbone_race._set_static_graph()
 
-    if hasattr(cfg, 'train_rule'):
-        if cfg.train_rule == 'Reweight':
-            cls_num_list = train_loader.dataset.get_cls_num_list()
+    # Discriminator of gender
+    backbone_gender = get_model('mlp_1layer', input_size=512, output_size=256).cuda()
+    # backbone_gender = get_model('mlp_2layers', input_size=512, hidden_size=256, output_size=256).cuda()
+    backbone_gender = torch.nn.parallel.DistributedDataParallel(
+        module=backbone_gender, broadcast_buffers=False, device_ids=[local_rank], bucket_cap_mb=16,
+        find_unused_parameters=True)
+    backbone_gender.train()
+    backbone_gender._set_static_graph()
 
-            train_sampler = None
-            beta = 0.9999
-            effective_num = 1.0 - np.power(beta, cls_num_list)
-            per_cls_weights = (1.0 - beta) / np.array(effective_num)
-            per_cls_weights = per_cls_weights / np.sum(per_cls_weights) * len(cls_num_list)
-            per_cls_weights = torch.FloatTensor(per_cls_weights).cuda()
+    # Discriminator of age
+    backbone_age = get_model('mlp_1layer', input_size=512, output_size=256).cuda()
+    # backbone_age = get_model('mlp_2layers', input_size=512, hidden_size=256, output_size=256).cuda()
+    backbone_age = torch.nn.parallel.DistributedDataParallel(
+        module=backbone_age, broadcast_buffers=False, device_ids=[local_rank], bucket_cap_mb=16,
+        find_unused_parameters=True)
+    backbone_age.train()
+    backbone_age._set_static_graph()
 
 
-    if hasattr(cfg, 'loss'):
-        if cfg.loss == 'CombinedMarginLoss':
-            margin_loss = CombinedMarginLoss(
-                64,
-                cfg.margin_list[0],
-                cfg.margin_list[1],
-                cfg.margin_list[2],
-                cfg.interclass_filtering_threshold
-            )
-            module_partial_fc = PartialFC_V2(
-                margin_loss, cfg.embedding_size, cfg.num_classes,
-                cfg.sample_rate, cfg.fp16)
-            module_partial_fc.train().cuda()
+    margin_loss = CombinedMarginLoss(
+        64,
+        cfg.margin_list[0],
+        cfg.margin_list[1],
+        cfg.margin_list[2],
+        cfg.interclass_filtering_threshold
+    )
 
-        elif cfg.loss == 'LDAMLoss':
-            margin_loss = LDAMLoss(cls_num_list=cls_num_list, max_m=0.5, s=64, weight=per_cls_weights, \
-                                num_classes=cfg.num_classes, embedding_size=cfg.embedding_size)
-            module_partial_fc = margin_loss
-            module_partial_fc.train().cuda()
-        
-    else:
-        margin_loss = CombinedMarginLoss(
-            64,
-            cfg.margin_list[0],
-            cfg.margin_list[1],
-            cfg.margin_list[2],
-            cfg.interclass_filtering_threshold
-        )
+    if cfg.optimizer == "sgd":
         module_partial_fc = PartialFC_V2(
             margin_loss, cfg.embedding_size, cfg.num_classes,
             cfg.sample_rate, cfg.fp16)
         module_partial_fc.train().cuda()
 
+        module_partial_fc_race = PartialFC_V2(
+            margin_loss, 256, 6,
+            cfg.sample_rate, cfg.fp16)
+        module_partial_fc_race.train().cuda()
 
+        module_partial_fc_gender = PartialFC_V2(
+            margin_loss, 256, 2,
+            cfg.sample_rate, cfg.fp16)
+        module_partial_fc_gender.train().cuda()
 
-    if cfg.optimizer == "sgd":
-        # module_partial_fc = PartialFC_V2(
-        #     margin_loss, cfg.embedding_size, cfg.num_classes,
-        #     cfg.sample_rate, cfg.fp16)
-        # module_partial_fc.train().cuda()
+        module_partial_fc_age = PartialFC_V2(
+            margin_loss, 256, 6,
+            cfg.sample_rate, cfg.fp16)
+        module_partial_fc_age.train().cuda()
+
         # TODO the params of partial fc must be last in the params list
         opt = torch.optim.SGD(
             params=[{"params": backbone.parameters()}, {"params": module_partial_fc.parameters()}],
             lr=cfg.lr, momentum=0.9, weight_decay=cfg.weight_decay)
 
     elif cfg.optimizer == "adamw":
-        # module_partial_fc = PartialFC_V2(
-        #     margin_loss, cfg.embedding_size, cfg.num_classes,
-        #     cfg.sample_rate, cfg.fp16)
-        # module_partial_fc.train().cuda()
+        module_partial_fc = PartialFC_V2(
+            margin_loss, cfg.embedding_size, cfg.num_classes,
+            cfg.sample_rate, cfg.fp16)
+        module_partial_fc.train().cuda()
         opt = torch.optim.AdamW(
             params=[{"params": backbone.parameters()}, {"params": module_partial_fc.parameters()}],
             lr=cfg.lr, weight_decay=cfg.weight_decay)
@@ -192,12 +193,21 @@ def main(args):
 
     start_epoch = 0
     global_step = 0
-    if cfg.resume:
-        dict_checkpoint = torch.load(os.path.join(cfg.output, f"checkpoint_gpu_{rank}.pt"))
+    # if cfg.resume:
+    if args.resume != '' and os.path.isfile(args.resume):
+        print(f'Loading pre-trained model \'{args.resume}\'')
+        # dict_checkpoint = torch.load(os.path.join(cfg.output, f"checkpoint_gpu_{rank}.pt"))
+        dict_checkpoint = torch.load(args.resume)
         start_epoch = dict_checkpoint["epoch"]
         global_step = dict_checkpoint["global_step"]
         backbone.module.load_state_dict(dict_checkpoint["state_dict_backbone"])
+        # backbone_race.module.load_state_dict(dict_checkpoint["state_dict_backbone_race"])
+        # backbone_gender.module.load_state_dict(dict_checkpoint["state_dict_backbone_gender"])
+        # backbone_age.module.load_state_dict(dict_checkpoint["state_dict_backbone_age"])
         module_partial_fc.load_state_dict(dict_checkpoint["state_dict_softmax_fc"])
+        module_partial_fc_race.load_state_dict(dict_checkpoint["state_dict_softmax_fc_race"])
+        module_partial_fc_gender.load_state_dict(dict_checkpoint["state_dict_softmax_fc_gender"])
+        module_partial_fc_age.load_state_dict(dict_checkpoint["state_dict_softmax_fc_age"])
         opt.load_state_dict(dict_checkpoint["state_optimizer"])
         lr_scheduler.load_state_dict(dict_checkpoint["state_lr_scheduler"])
         del dict_checkpoint
@@ -220,7 +230,11 @@ def main(args):
         writer=summary_writer
     )
 
-    loss_am = AverageMeter()
+    loss_id_am = AverageMeter()
+    loss_age_am = AverageMeter()
+    loss_gender_am = AverageMeter()
+    loss_race_am = AverageMeter()
+    loss_total_am = AverageMeter()
     amp = torch.cuda.amp.grad_scaler.GradScaler(growth_interval=100)
 
     for epoch in range(start_epoch, cfg.num_epoch):
@@ -232,24 +246,50 @@ def main(args):
             if len(train_batch) == 2:
                 img, local_labels = train_batch
             elif len(train_batch) == 4:
-                img, local_labels, race_label, gender_label = train_batch
+                img, local_labels, race_labels, gender_labels = train_batch
+            elif len(train_batch) == 5:
+                img, local_labels, age_labels, gender_labels, race_labels = train_batch
 
             global_step += 1
+            
             local_embeddings = backbone(img)
-            loss: torch.Tensor = module_partial_fc(local_embeddings, local_labels)
+
+            # undesired_indices = (race_labels != -1).nonzero().squeeze()   # because the dataset Casia-Webface doesn't have race and gender labels
+            # local_embeddings_normalized = torch.unsqueeze(torch.nn.functional.normalize(local_embeddings, dim=1), 1)
+
+            age_embeddings = backbone_age(local_embeddings)
+            gender_embeddings = backbone_gender(local_embeddings)
+            race_embeddings = backbone_race(local_embeddings)
+            # print('discrim_embeddings.size():', discrim_embeddings.size())
+            # print('race_labels.size():', race_labels.size())
+
+            loss_id: torch.Tensor = module_partial_fc(local_embeddings, local_labels)
+            loss_age: torch.Tensor = module_partial_fc_age(age_embeddings, age_labels)
+            loss_gender: torch.Tensor = module_partial_fc_gender(gender_embeddings, gender_labels)
+            loss_race: torch.Tensor = module_partial_fc_race(race_embeddings, race_labels)
+            # loss_total: torch.Tensor = loss_id - (alfa * loss_discrim)   # adversarial learning
+            # loss_total: torch.Tensor = loss_id + loss_race + loss_age + loss_gender   # collaborative learning
+            # loss_total: torch.Tensor = loss_id + loss_gender
+            loss_total: torch.Tensor = loss_id + loss_age
 
             if cfg.fp16:
-                amp.scale(loss).backward()
+                # amp.scale(loss_id).backward()
+                # amp.scale(loss_discrim).backward()   # Bernardo
+                amp.scale(loss_total).backward()       # Bernardo
                 if global_step % cfg.gradient_acc == 0:
                     amp.unscale_(opt)
                     torch.nn.utils.clip_grad_norm_(backbone.parameters(), 5)
+                    # torch.nn.utils.clip_grad_norm_(backbone_race.parameters(), 5)
                     amp.step(opt)
                     amp.update()
                     opt.zero_grad()
             else:
-                loss.backward()
+                # loss_id.backward()
+                # loss_discrim.backward()   # Bernardo
+                loss_total.backward()       # Bernardo
                 if global_step % cfg.gradient_acc == 0:
                     torch.nn.utils.clip_grad_norm_(backbone.parameters(), 5)
+                    # torch.nn.utils.clip_grad_norm_(backbone_race.parameters(), 5)
                     opt.step()
                     opt.zero_grad()
             lr_scheduler.step()
@@ -257,16 +297,27 @@ def main(args):
             with torch.no_grad():
                 if wandb_logger:
                     wandb_logger.log({
-                        'Loss/Step Loss': loss.item(),
-                        # 'Loss/Train Loss': loss_am.avg,
+                        'Loss/Step LossID': loss_id.item(),
+                        'Loss/Step LossDISCRIM': loss_race.item(),
+                        'Loss/Step LossTOTAL': loss_total.item(),
+                        # 'Loss/Train Loss': loss_id_am.avg,
                         'Process/Step': global_step,
                         'Process/Epoch': epoch
                     })
 
-                loss_am.update(loss.item(), 1)
-                callback_logging('id', global_step, loss_am, epoch, cfg.fp16, lr_scheduler.get_last_lr()[0], amp)
+                loss_id_am.update(loss_id.item(), 1)
+                loss_age_am.update(loss_age.item(), 1)                                                       # Bernardo
+                loss_gender_am.update(loss_gender.item(), 1)                                                       # Bernardo
+                loss_race_am.update(loss_race.item(), 1)                                                       # Bernardo
+                loss_total_am.update(loss_total.item(), 1)                                                           # Bernardo
+                callback_logging('id', global_step, loss_id_am, epoch, cfg.fp16, lr_scheduler.get_last_lr()[0], amp)
+                callback_logging('age', global_step, loss_age_am, epoch, cfg.fp16, lr_scheduler.get_last_lr()[0], amp)  # Bernardo
+                callback_logging('gender', global_step, loss_gender_am, epoch, cfg.fp16, lr_scheduler.get_last_lr()[0], amp)  # Bernardo
+                callback_logging('race', global_step, loss_race_am, epoch, cfg.fp16, lr_scheduler.get_last_lr()[0], amp)  # Bernardo
+                callback_logging('total', global_step, loss_total_am, epoch, cfg.fp16, lr_scheduler.get_last_lr()[0], amp)    # Bernardo
 
-                if global_step % cfg.verbose == 0 and global_step > 0:
+                # if global_step % cfg.verbose == 0 and global_step > 0:
+                if global_step % cfg.verbose == 0:
                     callback_verification(global_step, backbone)
 
         if cfg.save_all_states:
@@ -274,7 +325,13 @@ def main(args):
                 "epoch": epoch + 1,
                 "global_step": global_step,
                 "state_dict_backbone": backbone.module.state_dict(),
+                # "state_dict_backbone_age": backbone_age.module.state_dict(),
+                # "state_dict_backbone_gender": backbone_gender.module.state_dict(),
+                # "state_dict_backbone_race": backbone_race.module.state_dict(),
                 "state_dict_softmax_fc": module_partial_fc.state_dict(),
+                "state_dict_softmax_fc_age": module_partial_fc_age.state_dict(),
+                "state_dict_softmax_fc_gender": module_partial_fc_gender.state_dict(),
+                "state_dict_softmax_fc_race": module_partial_fc_race.state_dict(),
                 "state_optimizer": opt.state_dict(),
                 "state_lr_scheduler": lr_scheduler.state_dict()
             }
@@ -310,5 +367,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Distributed Arcface Training in Pytorch")
     parser.add_argument("config", type=str, help="py config file")
+    parser.add_argument("--resume", default="", type=str, help="work_dirs/idiffface-uniform_frcsyn_r100/2024-03-30_00-30-26_GPU0_MULTI-TASK-AGE-GENDER-RACE/model.pt")
     parser.add_argument("--annotation", default="", type=str, help="py config file")
     main(parser.parse_args())

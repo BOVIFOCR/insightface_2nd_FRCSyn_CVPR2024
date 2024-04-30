@@ -18,11 +18,7 @@ config.momentum = 0.9
 config.weight_decay = 5e-4
 config.batch_size = 128
 # config.batch_size = 64
-# config.batch_size = 32
-# config.batch_size = 16
-# config.batch_size = 8
-# config.lr = 0.1
-config.lr = 0.01
+config.lr = 0.1
 config.verbose = 2000
 # config.verbose = 10
 config.dali = False
@@ -41,7 +37,7 @@ config.train_rule = None             # default
 
 if uname.nodename == 'duo':
     # config.rec = "/train_tmp/faces_emore"
-    config.rec = ['/datasets2/2nd_frcsyn_cvpr2024/datasets/synthetic/dcface/dcface_0.5m_oversample_xid/imgs']      # duo
+    config.rec = '/datasets2/2nd_frcsyn_cvpr2024/datasets/synthetic/dcface/dcface_0.5m_oversample_xid/imgs_outliersRemoved_keptSamples_metric=cosine_2d_thresh=0.5'      # duo
 
     # config.val_targets = ['lfw', 'cfp_fp', "agedb_30"]
     # config.val_targets = ['']
@@ -58,7 +54,7 @@ elif uname.nodename == 'diolkos':
     config.val_protocol_path = ['/nobackup/unico/frcsyn_wacv2024/comparison_files/comparison_files/sub-tasks_1.1_1.2/bupt_comparison.txt']
 
 elif uname.nodename == 'daugman':
-    config.rec = ['/groups/unico/2nd_frcsyn_cvpr2024/datasets/synthetic/dcface/dcface_0.5m_oversample_xid/record/imgs']
+    config.rec = '/home/bjgbiesseck/datasets/synthetic/DCFace/dcface_wacv/organized'
 
     config.val_targets = ['/home/bjgbiesseck/datasets/real/1_CASIA-WebFace/faces_webface_112x112/lfw.bin', '/home/bjgbiesseck/datasets/real/1_CASIA-WebFace/faces_webface_112x112/cfp_fp.bin', '/home/bjgbiesseck/datasets/real/1_CASIA-WebFace/faces_webface_112x112/agedb_30.bin', 'bupt']
     # config.val_targets = ['bupt']
@@ -70,14 +66,14 @@ else:
 
 
 # config.num_classes = 85742
-config.num_classes = 10000
+# config.num_classes = 10000
+config.num_classes = 9996
 
 # config.num_image = 5822653
 config.num_image = 550000
 
-# config.num_epoch = 20
-config.num_epoch = 30
-# config.num_epoch = 60
+config.num_epoch = 20
+# config.num_epoch = 30
 config.warmup_epoch = 0
 
 

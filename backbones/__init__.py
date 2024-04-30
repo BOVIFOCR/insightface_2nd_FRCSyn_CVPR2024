@@ -2,7 +2,40 @@ from .iresnet import iresnet18, iresnet18_1x512, iresnet34, iresnet50, iresnet10
 from .mobilefacenet import get_mbf
 
 
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+
+class MLP_1layer(nn.Module):
+    def __init__(self, input_size, output_size):
+        super(MLP_1layer, self).__init__()
+        self.fc1 = nn.Linear(input_size, output_size)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        return x
+
+
+class MLP_2layers(nn.Module):
+    def __init__(self, input_size, hidden_size, output_size):
+        super(MLP_2layers, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.fc2 = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
+
+
 def get_model(name, **kwargs):
+
+    if name == "mlp_1layer":
+        return MLP_1layer(**kwargs)
+    elif name == "mlp_2layers":
+        return MLP_2layers(**kwargs)
+
     # resnet
     if name == "r18_1x512":
         return iresnet18_1x512(False, **kwargs)

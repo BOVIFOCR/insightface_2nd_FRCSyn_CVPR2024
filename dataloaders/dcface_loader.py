@@ -33,7 +33,8 @@ class DCFace_loader(Dataset):
             raise Exception(f'Dataset path does not exists: \'{root_dir}\'')
 
         self.root_dir = root_dir
-        self.file_ext = '.jpg'
+        # self.file_ext = '.jpg'
+        self.file_ext = '.png'
         self.path_files = ud.find_files(self.root_dir, self.file_ext)
         self.path_files = self.append_dataset_name(self.path_files, dataset_name='dcface')
         self.subjs_list, self.subjs_dict, self.races_dict, self.genders_dict = self.get_subj_race_gender_dicts(self.path_files)

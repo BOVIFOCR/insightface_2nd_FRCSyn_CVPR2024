@@ -104,14 +104,22 @@ def get_dataloader(
         else:
             if 'CASIA-WebFace'.lower() in root_dir.lower():
                 print(f'Loading train dataset \'{root_dir}\' ...')
-                train_set = CASIAWebFace_loader(root_dir, transform)
+                train_set = CASIAWebFace_loader(root_dir, transform=None)
 
             elif 'GANDiffFace'.lower() in root_dir.lower():
                 print(f'Loading train dataset \'{root_dir}\' ...')
                 train_set = GANDiffFace_loader(root_dir, transform)
 
+            elif 'DCFace'.lower() in root_dir.lower() and 'outliersRemoved'.lower() in root_dir.lower():
+                # dataset_name = root_dir.split('/')[-2]
+                # train_set = DCFace_OversampleXid_loader(dataset_name, root_dir, transform=None)
+                print(f'Loading train dataset \'{root_dir}\' ...')
+                train_set = DCFace_loader(root_dir, transform)
+
             elif 'DCFace'.lower() in root_dir.lower() and 'oversample_xid'.lower() in root_dir.lower():
-                train_set = DCFace_OversampleXid_loader(root_dir, transform)
+                dataset_name = root_dir.split('/')[-2]
+                print(f'Loading train dataset \'{root_dir}\' ...')
+                train_set = DCFace_OversampleXid_loader(dataset_name, root_dir, transform=None)
 
             elif 'DCFace'.lower() in root_dir.lower():
                 print(f'Loading train dataset \'{root_dir}\' ...')
